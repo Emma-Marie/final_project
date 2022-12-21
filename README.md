@@ -9,6 +9,6 @@ The project is made on my MacBook Air (2015) computer that runs macOS Monterey (
 
 **script**: The main purpose of the script is to vizualise the trends in danish funeral types. In the script the data from Danmarks Statistik is cleaned and vizualised with ggplot2. 
 
-**Variables**: 
+**Licens**: This project is licensed under the terms of the MIT license. 
 
 I hope you will have a good time investigating funerals with me!
