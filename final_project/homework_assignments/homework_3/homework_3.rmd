@@ -1,0 +1,168 @@
+---
+title: 'Homework 3: start with R'
+author: "Emma-Marie Vitskov Jørgensen"
+date: "2022-12-13, updated `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float:
+      toc_collapsed: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r package}
+library(dplyr)
+```
+
+# TASK 1
+
+At first I create a vector called "rooms" and assign it with the values given in the homework assignment
+
+```{r vector}
+rooms <- c(1, 2, 4, 5, 1, 3, 1, NA, 3, 1, 3, 2, 1, NA, 1, 8, 3, 1, 4, NA, 1, 3, 1, 2, 1, 7, 1, 9, 3, NA)
+```
+
+
+Now I want to remove the NA from the vector
+
+```{r remove NA}
+rooms_nona <- rooms[!is.na(rooms)]
+rooms_nona
+```
+
+Then I create a new vector only containing the elements which is greater than 2:
+```{r new vector}
+list(rooms_nona[rooms_nona>2])
+rooms_above_2 <- rooms_nona[rooms_nona>2]
+rooms_above_2
+```
+
+Now I want R to count the number of elements greater than 2:
+```{r sum}
+sum(rooms_above_2)
+```
+
+The sum of the elements grater than 2 is 55.
+
+# TASK 2: what type of data is the "rooms" vector?
+
+Checking the data type of the "rooms" vector:
+```{r}
+is.numeric(rooms) 
+```
+
+The vector contains numeric data.
+
+# TASK 3
+
+Installing "tidyverse" package:
+```{r packages 2}
+install.packages("tidyverse")
+library(tidyverse)
+```
+Downloading the SAFI_clean.csv file into RStudio:
+```{r download SAFI}
+download.file("https://ndownloader.figshare.com/files/11492171",
+              "SAFI_clean.csv", mode = "wb")
+interviews <- read_csv("SAFI_clean.csv")
+```
+
+
+
+
+# Task 4
+
+Installing tidyverse (to be able to make tibbles)
+```{r packages 3}
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+Downloading the monarchs dataset
+```{r}
+monarchs <- read_csv("data/monarchs.csv")
+
+monarchs #viewing data
+class(monarchs)
+```
+
+Exchanging the NULLs with NAs (so RStudion interprets it as missing data)
+```{r NULL to NA}
+monarchs[monarchs == "NULL"] <- NA
+
+monarchs #The NULLs are now NAs
+```
+
+Checking the data type of the `years_ruled` column in the data set, to see if its numeric:
+```{r}
+class(monarchs$years_ruled)
+```
+
+The data type is character and not numeric, and therefore I have to change the data type into numeric. But first I filter the NAs away:
+
+```{r remove NA 2}
+monarchs_nona <- monarchs %>% filter(years_ruled != "NA")
+
+```
+
+Changing the data in the years_ruled column into numeric data
+```{r change data type}
+monarchs_nona$years_ruled <- as.numeric(monarchs_nona$years_ruled)
+class(monarchs_nona$years_ruled)
+```
+
+The data in the `years_ruled` column is now numeric, and I can calculate the mean and median
+
+Calculating the mean duration of rule over time:
+```{r mean}
+mean(monarchs_nona$years_ruled)
+```
+
+
+Calculating the median:
+```{r median}
+median(monarchs_nona$years_ruled)
+```
+
+The mean is 19.13 years and the median is 16.5 years. It has to be noted, that the reign time of Margrethe 2. isn't a part of the calculations, because her reighn period hasn't ended yet. 
+
+Sorting the data set to see the three largest values (the three longest reigns)
+```{r}
+sort(monarchs_nona$years_ruled)
+```
+
+The three longest periods of reign is 43, 50 and 60 years
+
+Finding out which rows the three longest reigns belongs to:
+```{r find rows}
+which(monarchs == 60, arr.ind=TRUE)
+which(monarchs == 50, arr.ind=TRUE)
+which(monarchs == 43, arr.ind=TRUE)
+```
+
+The three monarchs ruling the longest can be found in row 40, 54 and 50
+
+Finding the names of the monarchs who have the longest reign periods
+```{r}
+print(monarchs[40,])
+print(monarchs[54,])
+print(monarchs[50,])
+```
+
+The monarchs ruling the longest are Christian 4th, Margrethe 2nd and Christian 9th. 
+
+How many days did they rule?
+```{r days of ruling}
+#Christian 4th (row 39)
+60*365
+# Margrethe 2nd (row 53)
+50*365
+# Christian 9th (row 49)
+43*365
+```
+
+Christian 9th has ruled for 21900 days, Margrethe 2nd for 18250 days and Christian 9th for 15695 days. 
+NB: I multiply by 365, because this is the average length of a year, but the number of days might be slightly incorrect, because of leap years etc.
