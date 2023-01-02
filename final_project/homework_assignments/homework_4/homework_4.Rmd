@@ -1,0 +1,201 @@
+---
+title: "Are we more civilized today?"
+author: "Emma-Marie Vitskov Jørgensen"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float:
+      toc_collapsed: true
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message=FALSE)
+```
+This exercise is based on the dataset provided by [OurWorldInData project](https://ourworldindata.org/homicides) based at the Oxford University.
+
+## The long-term trend in Homicides in Western Europe
+
+Understanding how homicide rates have changed prior to the modern era requires the help of historians and archivists. Manuel Eisner, a criminology professor at the University of Cambridge, and his colleagues published the Historical Violence Database \href{https://cjrc.osu.edu/research/interdisciplinary/hvd}: a compilation of data on long-term trends in homicide rates, in addition to qualitative information such as the cause of death, perpetrator and victim. This database is limited to countries with relatively complete historical records on violence and crime – mainly Western Europe and the US.
+
+Starting in the second half of the nineteenth century, these European regions have consistent police records of those accused of murder or manslaughter and annual counts of homicide victims. To go back further in time, reaching as far back as the thirteenth century, Eisner collected estimates (from historical records of coroner reports, court trials, and the police) of homicide rates made in over ninety publications by scholars.
+
+Homicide rates – measured as the number of homicides per 100,000 individuals – up to 1990 are sourced from Eisner’s (2003) publication and the Historical Violence Database. 
+
+Are homicide rates in Europe today lower or higher than in the past? Using the provided dataset, display and describe the long-run homicide rates for the five European regions: Italy, England, Germany, Netherlands and Scandinavia.
+
+ (introduction written by Adela)
+
+```{r library}
+library(tidyverse)
+library(readr)
+```
+
+## Load the available data from ourworldindata.org
+
+
+```{r load-data}
+
+Western_Europe <- read_csv("./data/homicide-rates-across-western-europe.csv")
+
+```
+
+## Inspect the data
+
+How clean and analysis-ready is the dataset? Do you understand what the column names represent? What is the difference between rate and homicide number?
+
+
+  __My answer__
+After inspecting the data set I find it was almost analysis-ready and the  column names understandable except understandable except from the column name  `Homicide rate in Europe over long-term (per 100,000)`which I change in the next task. 
+  
+  The rate is the amount of homicides pr. 100,000 people, while the number is the total number of homicides in a year. 
+
+```{r inspect}
+head(Western_Europe) #inspecting
+view(Western_Europe)
+
+```
+
+Ok, the data look good except for  which is not very easy to work with.
+
+- Use the `names()` function and assignment key to relabel this column to `homicides_per_100k` 
+
+```{r relabel column, eval=TRUE}
+# Changing the column name
+colnames(Western_Europe)[colnames(Western_Europe) == "Homicide rate in Europe over long-term (per 100,000) (homicides per 100,000 people)" ] <- "homicides_per_100k"
+
+# checking to see if the column has actually changed its name
+colnames(Western_Europe)
+
+```
+
+Now, that you have looked at what the data looks like and what it represents, and streamlined it, let's see what big picture it contains.
+
+## Let's see what the long-term trend is in homicides
+
+- use `ggplot()` function and remember the`+` at the end of the line
+- chose a meaningful `geom_......()`  for geometry (hint: points are not great)
+- load `Year` on the `x` axis and `homicides_per_100k` column in y axis
+- to color individual country entries consistently, assign the country column to the argument `color`.
+- provide meaningful title and axis labels
+- remember to change the `eval` flag so that the code chunk renders when knitted 
+
+```{r plot-homicides, eval = TRUE}
+# Creating a chard showing the long-term trend of homicides 
+Western_Europe %>%
+  ggplot(aes(x=Year, y=homicides_per_100k, color=Entity)) +
+  geom_line() +
+  geom_point() +
+  labs(title="Homicide developement in Western Europe",x="Year",y="Homicides per 100.000 people", colour="Countries")
+
+```
+
+Alright, the homicide rates should all be descending over time. What a comfort. But the viz is not super clear. Let's check the rates for individual countries.
+
+## Uncouple the homicides of individual countries for easier view
+
+You can visualize each country's trend separately by adding an extra argument to the ggplot, the `facet_wrap()` and feeding it the country column. If in doubt, check your ggplot tutorial and your country column name for exact usage.
+
+- reuse the ggplot from the chunk above
+- insert `facet_wrap()` after the specification of geometry to split countries in separate charts
+- change the facet "layout" to two columns and three rows so that the trends are easier to see in horizontal layout. 
+
+
+```{r individual-plots-homicides, eval = TRUE}
+# creating a chart for each country with the facet_wrap() function  
+ggplot(Western_Europe,aes(x=Year, y=homicides_per_100k, color=Entity)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(.~ Entity, ncol = 2) +
+  labs(title="Homicide developement in Western Europe",x="Year",y="Homicides per 100.000 people", color="Countries") +
+  theme(legend.position="bottom") # changing the position of the legend (final task)
+
+```
+
+## Compare the trends in homicide with the pattern of reign duration among Danish rulers through time.
+
+- Load your Danish king dataset. Hopefully it is tidy and your years and duration of reign are all numeric.
+- You need to have a consistent way of plotting the rulers' reign on the x axis, so I recommend you create a midyear column by calculating the middle of each monarch's rule (Hint: `midyear` = `endyear` - (`endyear`-`startyear`)/2)
+- Start a ggplot plotting midyear on x axis and duration on y axis
+- Try `geom_smooth()` for geometry 
+- Provide meaningful labels and a title
+- How would you characterize the trend compared to the homicides above?
+
+
+I Download the kings.csv and divide the objects in the data set by the semicolons:
+
+```{r load Danish Kings data set}
+# Downloading the kings.csv data set and dividing the objects by the ;
+library(readr)
+
+kings <- read_delim("./data/kings.csv", 
+    delim = ";", escape_backslash = TRUE, 
+    escape_double = FALSE, na = "NA", trim_ws = TRUE)
+
+View(kings) #viewing the data
+
+```
+
+Checking the data type of the numbers in the data set and changing them into numeric data: 
+
+```{r change data type}
+
+# Cheking the data type of the years and duration of reign (column 2, 3 and 4)
+class(kings[,2:4])
+
+# The data isn't numeric, and therefore I must change the data type
+kings$Start_date <- as.numeric(kings$Start_date)
+class(kings$Start_date)
+
+kings$End_date <- as.numeric(kings$End_date)
+class(kings$End_date)
+
+kings$Yearasruler <- as.numeric(kings$Yearasruler) 
+class(kings$Yearasruler)
+
+```
+
+Now that the data is numeric, I can calculate the mid year of each monarch's rule and make create a midyear column:
+
+```{r calculate mid year}
+# Calculating the midyear of each monarch's rule and making it a variable
+mid_year <- kings$End_date-kings$Yearasruler/2
+
+# Creating a midyear column called "middle_of_rule" containing the middle of each monarch's rule
+kings["middle_of_rule"] <- mid_year
+```
+Now the data is ready for vizualisation: 
+
+```{r creating kings chart, eval = TRUE}
+# Creating a chart with the data from the "middle_of_rule" column
+ggplot(kings,aes(x=middle_of_rule, y=Yearasruler)) +
+  geom_smooth() +
+  labs(title="Reign duration among Danish rulers through time",x="Year",y="Duration of reign (midyear of reign)")
+```
+
+
+   __My answer to the question: How would you characterize the trend compared to the homicides above?__
+   The duration of reign has increased from the 11th-18th century, and after the 18th century it has declined a bit as we approached the 20th century. The general trend in homicides rates in all five countries is a drastic decline from the 13th century to the 18th century and a less drastic decline from the 18th century to the 19th century. From the 19th century the rate has almost evened out approaching the 21th century (apart from in Italy). Overall, the duration of reign has increased while lesser people got murdered per 100.000 people.
+
+
+## Final tasks
+
+
+1) Plot: In the facetted plot above, move the legend from the current position on the side to below the facets, and label it "Country" instead of "Entity".
+
+2) Rmarkdown: 
+
+  - edit the author of the document, and convert 'Final Tasks' into heading #2 (like the other headings) 
+  - add a `floating table of contents` to your Rmarkdown document, 
+  - provide informative `chunk-names` and edit flags in your R chunks, and
+  - automatically generate a `timestamp` to show when the document was last updated. (Hint: check the Rmarkdown episode in our Data Carpentry tutorial)
+
+3) Question: In <250 words articulate your answer on the basis of the data visualizations to the following question: are we more civilized today?
+
+    __My answer__
+      
+    Looking at the homicide rates, I would argue that we have become more civilized in Western Europe since the 14th century, which is the start year of the data set. The homicide rates are decreasing in all five countries, and I would argue that it is more civilized to solve conflicts and the like in a non-violent way that to solve it with murder. 
+   
+    Looking at the duration of reign among Danish rulers, whose duration of reign has overall increased since the beginning of the Danish monarchy in the 11th century, I would also argue, that we have become more civilized. Maybe the increased time of rule can be related to the kings not being killed, but I think a better explanation is the fact that people generally get older through time because of better health and living conditions etc. Civilization is often linked to progress and development, and it is due to the development of medicine, better ways to provide food etc, that the general life span has climbed. However, this argument can't explain, why the duration of rule has decreased from the 18th century. 
