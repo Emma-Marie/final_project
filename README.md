@@ -24,7 +24,6 @@ The main purpose of the script is to vizualise the trends in danish funeral type
 **Packages needed:**
 
 `tidyverse`
-`readxl`
 `dplyr`
 `ggplot2`
 
