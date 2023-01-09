@@ -1,0 +1,432 @@
+---
+title: "Has the danish funerary practize secularized?"
+author: "Emma-Marie Vitskov Jørgensen"
+date: "2022-11-07, updated `r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float:
+      toc_collapsed: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+Some scholars claim that Denmark are one of the most secularized countries in the world (Walter 2015,5). For my final project I will investigate if this secularization has affected the way Danes likes to be buried. Has the danish funerary practice been secularized, or does the development in funeral types tell a different story?
+
+My research question:How can  the development in the number of civil funerals in Denmark from 2006-2021 be characterized?
+
+To answer my research question I will be analyzing a data sets from Danmarks Statistik. When I downloaded the data set from the website, it was downloaded as an excel file, and I converted it into a csv format before loading them into this script. 
+The data sets can be found in the "data" folder on my Github account, and information about the data sets from this rmarkdown script can be found under "Required Metadata" in the project report.
+
+Link to Github: https://github.com/Emma-Marie/final_project 
+
+References: 
+Walter, Tony (2015), ”Secularization”, In: In: C.M. Parkes & W. Young, eds Death and Bereavement Across Cultures, London: Routledge, 2nd edn, 2015, pp. 133-148.
+
+
+### Loading packages
+Loading the packages needed for my data processing and analysis-
+
+```{r load packages}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+```
+
+### Loading messy data set
+ 
+Now I'm able to load the raw and messy data from Danmarks Statistik into this script using the `read_csv()` function:
+
+```{r load data}
+
+setwd('..')
+funerals_messy <- read_csv("./data/funarals_messy.csv")
+
+#checking the data type
+class(funerals_messy) #it's a tibble
+
+```
+
+## Inspect the `funerals_messy` data
+
+I will inspect all the data sets to check if it is clean and ready for analysis:
+
+```{r inspect funerals}
+#inspecting the data
+head(funerals_messy)
+tail(funerals_messy)
+
+#viewing the data set
+view(funerals_messy)
+
+```
+
+There is several things about `funerals_messy` which I would like to change before the analysis:
+
+- All the information is placed in one column, and have to be divided into several columns. 
+- Turn the years from row 2 into the names of column 2-16 and afterwards remove row 2.
+- Change the name of column 1.
+- Remove row 1 which only contains a note about the unit of the data and a lot of empty cells (NA). 
+- Remove row 10 which is empty.
+- Remove row 11 which holds a lot of empty cells and a cell with a note about the source of the data.
+- The names of the observations in the first column (the different types of funerals) are quite long and hard to work with. Therefore I will change the names into something shorter. I will also translate them from danish into English to match the written language of this script and of the project report. 
+- check if the numbers in the data set are numeric data, and convert them into numeric it they aren't.
+
+
+## Cleaning the `funerals_messy` data
+
+I start by turning the data into a data frame:
+
+```{r make data frame}
+#turn into data frame
+funerals_messy <- as.data.frame(funerals_messy)
+class(funerals_messy)
+```
+
+I start the cleaning of the `funerals_messy`data by turning the years into column names.
+
+```{r change column names, results=FALSE}
+#Turn row 2 into columns names
+#checking that 2 is the right row number
+funerals_messy[2,] #it is!
+
+#turning row 2 into the column names
+colnames(funerals_messy) <- funerals_messy[2,]
+head(funerals_messy)
+
+#separating the different years by the ; into individual columns
+funerals_messy[c(' ','2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021')] <- str_split_fixed(funerals_messy$`;2006;2007;2008;2009;2010;2011;2012;2013;2014;2015;2016;2017;2018;2019;2020;2021`, ';', 17)
+
+head(funerals_messy)# the years are now column names!
+
+```
+
+After viewing the data frame, I see that every single piece of data has been separated into individual columns under the right year, which was my intention. But column one still contains all the information from all years bundled up in one column. This column is now needless and I will remove it:
+
+```{r remove unnecesarry column, results=FALSE}
+
+#removing column 1
+funerals_lesscolumns <- funerals_messy[,-1]
+
+head(funerals_lesscolumns) # column 1 has been removed
+
+```
+
+The new column 1 lacks a name, and I want to call it "funeral_type":
+
+```{r name column}
+
+#changing name of column 1
+colnames(funerals_lesscolumns)[1] <- "funeral_type"
+
+#checking if name is changed
+head(funerals_lesscolumns)
+```
+
+Now I remove the unnecessary rows: row 2 which contain the years, row 1 which contain a comment about the data unit, row 10 which is empty and row 11 which contains a comment on the source of the data: 
+
+```{r remove rows, results=FALSE}
+#Removing 1st, 2nd, 10th and 11th row
+funerals_lessrows <- funerals_lesscolumns[-c(1,2,10,11),]
+
+head(funerals_lessrows)
+tail(funerals_lessrows)
+
+```
+
+Now the data set looks quite nice. The final touches will be to change the names of the observations in column 1 into something short and English:
+
+```{r rename values}
+#changing values
+
+funerals_lessrows[funerals_lessrows == "Dødsfald registreret"] <- "registered deaths"
+funerals_lessrows[funerals_lessrows == "Begravet/bisat under medvirken af pastoratets præster fra sognets kirke"] <- "pastoral priest and parish church"
+funerals_lessrows[funerals_lessrows == "Begravet/bisat under medvirken af pastoratets præster andetsteds end fra sognets kirker"] <- "pastoral priest and other church"
+funerals_lessrows[funerals_lessrows == "Begravet/bisat under medvirken af andre præster i folkekirken fra sognets kirker"] <- "other priest and parish church"
+funerals_lessrows[funerals_lessrows == "Begravet/bisat under medvirken af andre præster i folkekirken andetsteds end sognets kirke"] <- "other priest and other church"
+funerals_lessrows[funerals_lessrows == "Begravet/bisat under medvirken af præster fra frimenigheder/andre trossamfund"] <- "free church or other religion"
+funerals_lessrows[funerals_lessrows == "Begravet/bisat uden gejstlig medvirken"] <- "civil funeral"
+
+#Checking if the values have changed
+head(funerals_lessrows) # they have!
+tail(funerals_lessrows) # they have!
+
+```
+Finally, I would like to check the data type to see if the years and the numbers are of the numeric data type, and convert them into numeric data if the aren't:
+
+```{r change data type}
+ #checking data type of the numbers in the 2006 column
+class(funerals_lessrows$`2006`) # the data is characters, but I would like it to be numeric
+
+#changing data types
+
+funerals_lessrows$`2006` <- as.numeric(funerals_lessrows$`2006`)
+funerals_lessrows$`2007` <- as.numeric(funerals_lessrows$`2007`)
+funerals_lessrows$`2008` <- as.numeric(funerals_lessrows$`2008`)
+funerals_lessrows$`2009` <- as.numeric(funerals_lessrows$`2009`)
+funerals_lessrows$`2010` <- as.numeric(funerals_lessrows$`2010`)
+funerals_lessrows$`2011` <- as.numeric(funerals_lessrows$`2011`)
+funerals_lessrows$`2012` <- as.numeric(funerals_lessrows$`2012`)
+funerals_lessrows$`2013` <- as.numeric(funerals_lessrows$`2013`)
+funerals_lessrows$`2014` <- as.numeric(funerals_lessrows$`2014`)
+funerals_lessrows$`2015` <- as.numeric(funerals_lessrows$`2015`)
+funerals_lessrows$`2016` <- as.numeric(funerals_lessrows$`2016`)
+funerals_lessrows$`2017` <- as.numeric(funerals_lessrows$`2017`)
+funerals_lessrows$`2018` <- as.numeric(funerals_lessrows$`2018`)
+funerals_lessrows$`2019` <- as.numeric(funerals_lessrows$`2019`)
+funerals_lessrows$`2020` <- as.numeric(funerals_lessrows$`2020`)
+funerals_lessrows$`2021` <- as.numeric(funerals_lessrows$`2021`)
+
+#just checking a random number in 2006 and 2017 to see if the data type has actually changed
+class(funerals_lessrows[1,2])
+class(funerals_lessrows[1,17]) # the data are now numeric
+
+```
+
+
+Now that the data set is clean and ready for analysis I'll export the clean data into a csv file called `funerals_clean.csv`:
+
+```{r save funerals_clean}
+getwd() #get my current position
+setwd('..') #changing position
+
+readr::write_csv(funerals_lessrows,"data_output/funerals_clean.csv")# creates a new csv
+
+```
+
+## Filter the data
+
+```{r define funerals_clean}
+setwd('..')
+funerals_clean <- read_csv("./data_output/funerals_clean.csv")
+```
+
+To be able to do some visualization with percentages, I remove the `registered deaths` row and sum all the funerals together in a new row:
+
+```{r remove row}
+ #removing the first row
+funerals_noregdeaths <- funerals_clean[-1,]
+
+```
+
+Summing all the funeral types
+
+```{r sum funerals}
+funerals_total <- funerals_noregdeaths %>%
+  bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "total funerals"))
+
+```
+Saving the data frame with the total amount of funerals in a csv called `funerals_total.csv`:
+
+```{r save total funerals data frame}
+setwd('..') #changing position
+readr::write_csv(funerals_total,"data_output/funerals_total.csv")# creates a new csv
+
+```
+
+
+I will create a data frame only containing the funerals in the national church the sum of those. This means I will only choose the first four rows from the `funerals_clean` data for this data set. 
+
+Summing the number of funerals in the danish national church for each year:
+
+```{r sum national church funerals}
+funerals_nationalchurch <- funerals_noregdeaths[1:4,] #choosing the four relevant columns
+
+funerals_nationalchurch_total <- funerals_nationalchurch %>% 
+  bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "total national church funerals"))
+
+```
+
+Saving the data frame with the total amount of funerals in the danish national church in a csv called `funerals_nationalchurch.csv`:
+
+```{r save total national church data frame}
+setwd('..') #changing position
+readr::write_csv(funerals_nationalchurch_total,"data_output/funerals_nationalchurch.csv") # creates a new csv
+
+```
+
+Save th total amount of funerals in danish national church, total amount of funerals in free churches and other religions, and the total number of civil funerals in the same data frame:
+
+```{r data frame all total values}
+#Adding rows from other data sets
+total_allfuneraltypes <- funerals_rel_total[5,] #adding free church and other religions
+
+total_allfuneraltypes[nrow(total_allfuneraltypes) + 1,] <- funerals_nationalchurch_total[5,] #adding national church total
+
+total_allfuneraltypes[nrow(total_allfuneraltypes) + 1,] <- funerals_total[6,] #adding national church total
+
+```
+
+
+Saving the data frame with the total amount of the different funeral types in a csv called `total_allfuneraltypes.csv`:
+
+```{r save total funeral types data frame}
+setwd('..') #changing position
+readr::write_csv(total_allfuneraltypes,"data_output/total_allfuneraltypes.csv")# creates a new csv
+
+```
+
+Now I got the data I need to make the visualizations I have in mind.
+
+
+## Vizualisation 1 - the trends in funeral types through time
+
+I would like to make a visualization that compares the amount of civil funerals with the amount of religious funerals.I choose a line chard to compare the funeral types from 2006-2021. To be able to do so with the ggplot2 package, I turn the data frames into a long format:
+
+```{r long format}
+
+#making data frames into long format
+
+total_allfuneralstypes_long <- total_allfuneraltypes %>% 
+  gather(year, number, -funeral_type)
+
+```
+
+Now I'm able to make the chard:
+
+```{r line chard}
+funerals_plot <- ggplot(total_allfuneralstypes_long,aes(x=`year`, y=`number`, color=funeral_type, group=funeral_type)) +
+  geom_line() +
+  geom_point() +
+  labs(title="Danish funerals 2006-2021",x="Year",y="Number of funerals", color="Funeral types",caption = "Figure 1: Small long term increase in civil funerals and in funerals from other religions since 2006, but the national church still hold the majority of funerals") +
+  scale_color_brewer(palette = "Paired") + #choosing a color palette
+  theme(legend.position="bottom") #moving the legend below the chart
+
+funerals_plot # show chart
+  
+```
+
+From the line chard I can see some trends:
+
+_Long term trends:_
+
+- small increase in the number of civil funerals and funerals held by other religions or free churches. 
+- Small decline in funerals in the national church. 
+
+_Short term trends:_
+
+- small decline in civil funerals form 2018-2021. In the same period funerals in both the national church and in other religions or free churches are increased.
+- small increase in both civil funerals and funerals in national church from 2014-2018, which might just be due to a general rise in the number of funerals. 
+
+
+Save the chart as PNG in fig_output repository:
+
+```{r save chart 1}
+setwd('..') #set the current position
+
+png(file="fig_output/funerals_linechart.png",
+width=600, height=350)
+funerals_plot 
+dev.off()
+
+```
+
+
+## Vizualisation 2 - comparing 2006 and 2021
+
+For the next chart I want to know what percentage of the total funerals are civil funerals, funerals in the national church and funerals in other religions/free churches:
+
+```{r percentage dataframe}
+
+#create sum row:
+total_allfuneraltypes_sum <- total_allfuneraltypes %>%
+  bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "total funerals"))
+
+#calculating civil funerals percentage
+civil_percent <- total_allfuneraltypes_sum[3,2:17]/total_allfuneraltypes_sum[4,2:17]*100
+#calculating national church percentage
+natchurch_percent <- total_allfuneraltypes_sum[2,2:17]/total_allfuneraltypes_sum[4,2:17]*100
+#calculating other religions and free churches percentage
+otherrel_freechurch_percent <- total_allfuneraltypes_sum[1,2:17]/total_allfuneraltypes_sum[4,2:17]*100
+
+```
+
+
+Creating three separate data frames with the percentage from above and a column containing the funeral type, and making the data frames into long format: 
+```{r create data frame}
+#create data frame with percent and the funeral type
+funeral_type = c("civil")
+civil_percent_df <- cbind(funeral_type, civil_percent)
+#Turn into long format
+civil_percent_long <- civil_percent_df %>% 
+  gather(year, percent, -funeral_type)
+
+
+#create data frame with percent and the funeral type
+funeral_type = c("national church")
+natchurch_percent_df <- cbind(funeral_type, natchurch_percent)
+#Turn into long format
+natchurch_percent_long <- natchurch_percent_df %>% 
+  gather(year, percent, -funeral_type)
+
+
+#create data frame with percent and the funeral type
+funeral_type = c("free church and other religions")
+otherrel_percent_df <- cbind(funeral_type, otherrel_freechurch_percent)
+#Turn into long format
+otherrel_percent_long <- otherrel_percent_df %>% 
+  gather(year, percent, -funeral_type)
+```
+
+
+Combining the three data frames with percentages into one, which I can then use for visualization:
+
+```{r combined data frame percent}
+#Combine data frames
+
+funerals_percent <- rbind(civil_percent_long,natchurch_percent_long, otherrel_percent_long)
+
+```
+
+Saving the data frame with the percentages of the different funeral types in a csv called `funerals_percent.csv`:
+
+```{r save funeral percent data frame}
+setwd('..') #changing position
+readr::write_csv(funerals_percent,"data_output/funerals_percent.csv")# creates a new csv
+
+```
+
+Creating a chard showing the percentage of civil and religious funerals for each year:
+
+```{r bar chart}
+
+percent_chart <- ggplot(funerals_percent[c(1,17,33,16,32,48),],aes(x=`year`, y=`percent`, fill=funeral_type)) + #the selected columns is the columns containing the years 2006 and 2021
+  geom_bar(stat = "identity") +
+   labs(title="Funeral types in 2006 and 2021 (percent)",x="Year",y="Percent of total amount of funerals", fill="Funeral types",caption = "Figure 2: the percentage of civil funerals have increased, but around 80% of funerals are still held by the national church.") + #editing names and captions
+  scale_fill_brewer(type = "qual", palette = "Paired") + #choosing a color palette
+  theme(legend.position="bottom") #moving the legend below the chart
+
+percent_chart #show chart
+
+```
+
+Save the chart as PNG in fig_output repository:
+
+```{r save chart 2}
+setwd('..') #set the current position
+
+png(file="fig_output/percent_barchart.png",
+width=600, height=350)
+percent_chart 
+dev.off()
+
+```
+
+The comparison of 2006 and 2021 shows the following:
+
+-  The civil funerals has increased from 8,7% in 2006 to 13,8% in 2021. 
+-  The funerals in free churches and other religions have increased from 1,5% in 2006 to 5.2% in 2021
+-  The funerals in the national church has decreased from 89,8% in 2006 to 81% in 2021. 
+-  There are more civil funerals than funerals in free churches and other religions in both 2006 and 2021. 
+
+
+## Conclusion
+
+From 2006-2021 there has been a small increase in civil funerals, but it is indeed very small. There has also been a small decline in funerals in the national church, but the national church still hold the great majority of funerals in Denmark. 
+
+There were a small decline in civil funerals since 2018-2021, and both funerals in national church and in other religions/free churches increased in the same period.
