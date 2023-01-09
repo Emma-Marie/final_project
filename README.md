@@ -1,6 +1,6 @@
 # Has the danish funerary practize been secularized?
 
-**Motivation (copied from my final project):**  
+**Motivation (from my final project):**  
 
 This project investigates the developement in civil funerals from 2006-2021 and compare the trend in civil funerals with the amount of funerals in the danish national church and in other religions & freechurches. Funerals both mirror and shape the way people interpret and cope with death and how professionals such as nurses and social health care assistants take care of the dying and the mourning. If the funerals are brought into a new (non)religious framework, the way people understand and cope with death and loss will change, and so will the conversation about death and grief, and the way professionals have to talk about death and grief with the dying and the mourning (Walter 2015, 133).
 
